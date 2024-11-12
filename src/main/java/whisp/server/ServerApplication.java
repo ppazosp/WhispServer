@@ -19,10 +19,6 @@ public class ServerApplication {
 
             System.out.println("Server started, waiting for connections...");
 
-            while (true) {
-                Thread.sleep(5000);
-            }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
