@@ -6,5 +6,7 @@ module whisp.server {
 
     opens whisp.server to javafx.fxml;
     exports whisp.server;
+    exports whisp.interfaces;
+    opens whisp.interfaces to javafx.fxml;
 
 }

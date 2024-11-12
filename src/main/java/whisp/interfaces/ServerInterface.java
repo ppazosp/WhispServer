@@ -1,6 +1,4 @@
-package whisp.server;
-
-import whisp.server.ClientInterface;
+package whisp.interfaces;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

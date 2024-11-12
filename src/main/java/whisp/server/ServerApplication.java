@@ -1,7 +1,6 @@
 package whisp.server;
 
-import javafx.application.Application;
-import javafx.stage.Stage;
+import whisp.interfaces.ServerInterface;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
