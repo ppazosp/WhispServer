@@ -5,7 +5,6 @@ import whisp.interfaces.ServerInterface;
 
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,27 +13,31 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class Server extends UnicastRemoteObject implements ServerInterface {
-    private static final int RMIPortnumber = 1099;
-    static String registryURL;
-    private final static int SERVER_PORT = 8888;
 
+    DBManager dbManager;
     HashMap<String, ClientInterface> clients = new HashMap<>();
 
     protected Server() throws RemoteException {
         super();
+        dbManager = new DBManager();
         checkIfAlive();
     }
 
     @Override
     public void registerClient(ClientInterface client) throws RemoteException {
-        client.receiveActiveClients(clients);
-        for (ClientInterface c : clients.values()) {
-            c.receiveNewClient(client);
+        List<String> clientFriendsList = dbManager.getFriends(client.getUsername());
+        HashMap<String, ClientInterface> clientFriendHashMap = new HashMap<>();
+        for (String friend : clientFriendsList) {
+            if(clients.containsKey(friend)) {
+                clientFriendHashMap.put(friend, clients.get(friend));
+            }
         }
-
+        client.receiveActiveClients(clientFriendHashMap);
+        for (ClientInterface c : clients.values()) {
+            if(dbManager.areFriends(c.getUsername(), client.getUsername())) c.receiveNewClient(client);
+        }
         clients.put(client.getUsername(), client);
         System.out.println(client.getUsername() + " connected");
-
     }
 
     public void checkIfAlive() {
@@ -57,7 +60,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
             System.out.println(clientUsername + " disconnected");
             ClientInterface deadClient = clients.remove(clientUsername);
             for (ClientInterface otherClient : clients.values()) {
-                otherClient.disconnectClient(deadClient);
+                if(dbManager.areFriends(otherClient.getUsername(), deadClient.getUsername())) otherClient.disconnectClient(deadClient);
             }
 
         } catch (RemoteException ex) {

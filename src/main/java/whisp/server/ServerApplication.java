@@ -7,9 +7,7 @@ import java.rmi.registry.Registry;
 
 public class ServerApplication {
 
-    static String registryURL;
     private final static int SERVER_PORT = 1099;
-
 
     public static void main(String[] args) {
         try {
@@ -20,7 +18,7 @@ public class ServerApplication {
             System.out.println("Server started, waiting for connections...");
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error starting server");
         }
     }
 }
