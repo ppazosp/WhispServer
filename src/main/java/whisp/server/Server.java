@@ -34,7 +34,10 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         }
         client.receiveActiveClients(clientFriendHashMap);
         for (ClientInterface c : clients.values()) {
-            if(dbManager.areFriends(c.getUsername(), client.getUsername())) c.receiveNewClient(client);
+            if(dbManager.areFriends(c.getUsername(), client.getUsername())){
+                c.receiveNewClient(client);
+                System.out.println(client);
+            }
         }
         clients.put(client.getUsername(), client);
         System.out.println(client.getUsername() + " connected");
