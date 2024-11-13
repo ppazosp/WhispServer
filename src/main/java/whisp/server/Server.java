@@ -58,7 +58,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     public void disconnectClient(String clientUsername ) {
         try {
             System.out.println(clientUsername + " disconnected");
-            ClientInterface deadClient = clients.remove(clientUsername);
+            ClientInterface deadClient = clients.get(clientUsername);
+            clients.remove(clientUsername);
             for (ClientInterface otherClient : clients.values()) {
                 if(dbManager.areFriends(otherClient.getUsername(), deadClient.getUsername())) otherClient.disconnectClient(deadClient);
             }
