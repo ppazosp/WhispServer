@@ -66,7 +66,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
         } catch (RemoteException ex) {
             System.err.println("Error notifying disconnection");
-            //stack
         }
     }
 }
