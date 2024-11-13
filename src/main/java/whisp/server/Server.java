@@ -61,11 +61,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
             ClientInterface deadClient = clients.get(clientUsername);
             clients.remove(clientUsername);
             for (ClientInterface otherClient : clients.values()) {
-                if(dbManager.areFriends(otherClient.getUsername(), deadClient.getUsername())) otherClient.disconnectClient(deadClient);
+                if(dbManager.areFriends(otherClient.getUsername(), clientUsername)) otherClient.disconnectClient(deadClient);
             }
 
         } catch (RemoteException ex) {
             System.err.println("Error notifying disconnection");
+            //stack
         }
     }
 }

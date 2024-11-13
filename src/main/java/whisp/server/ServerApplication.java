@@ -11,6 +11,8 @@ public class ServerApplication {
 
     public static void main(String[] args) {
         try {
+            //TODO: conseguir la ip dinamicamnete
+            System.setProperty("java.rmi.server.hostname", "192.168.205.113");
             Registry registry = LocateRegistry.createRegistry(SERVER_PORT);
             ServerInterface server = new Server();
             registry.rebind("MessagingServer", server);
