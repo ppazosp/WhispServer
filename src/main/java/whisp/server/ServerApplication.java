@@ -2,6 +2,7 @@ package whisp.server;
 
 import whisp.interfaces.ServerInterface;
 
+import java.net.InetAddress;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
@@ -12,7 +13,10 @@ public class ServerApplication {
     public static void main(String[] args) {
         try {
             //TODO: conseguir la ip dinamicamnete
-            System.setProperty("java.rmi.server.hostname", "localhost");
+            String hostAddress = InetAddress.getLocalHost().getHostAddress();
+            //imprime la host addres
+            System.out.println("Host address: " + hostAddress);
+            System.setProperty("java.rmi.server.hostname", hostAddress);
             Registry registry = LocateRegistry.createRegistry(SERVER_PORT);
             ServerInterface server = new Server();
             registry.rebind("MessagingServer", server);

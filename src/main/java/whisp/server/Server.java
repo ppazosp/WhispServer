@@ -71,5 +71,21 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
             System.err.println("Error notifying disconnection");
         }
     }
+
+    //TODO: funcion para comprobar que un usuario esta conectado
+
+
+    @Override
+    public boolean sendRequest(String requestSender, String requestReceiver) throws RemoteException {
+        //comprobar que el ususario está conectado y y enviarle la solicitud
+        if(clients.containsKey(requestReceiver)) {
+            clients.get(requestReceiver).receiveFriendRequest(requestSender);
+            return true;
+        }
+        return false;
+    }
+
 }
+
+
 
