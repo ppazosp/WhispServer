@@ -12,11 +12,8 @@ public class ServerApplication {
 
     public static void main(String[] args) {
         try {
-            //TODO: conseguir la ip dinamicamnete
-            String hostAddress = InetAddress.getLocalHost().getHostAddress();
-            //imprime la host addres
-            System.out.println("Host address: " + hostAddress);
-            System.setProperty("java.rmi.server.hostname", hostAddress);
+
+            System.setProperty("java.rmi.server.hostname", "192.168.1.135");
             Registry registry = LocateRegistry.createRegistry(SERVER_PORT);
             ServerInterface server = new Server();
             registry.rebind("MessagingServer", server);
@@ -25,6 +22,7 @@ public class ServerApplication {
 
         } catch (Exception e) {
             System.err.println("Error starting server");
+            e.printStackTrace();
         }
     }
 }
