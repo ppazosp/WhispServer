@@ -81,7 +81,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
 
     @Override
     public boolean sendRequest(String requestSender, String requestReceiver) throws RemoteException {
-        //comprobar que el ususario está conectado y y enviarle la solicitud
         if(clients.containsKey(requestReceiver)) {
             clients.get(requestReceiver).receiveFriendRequest(requestSender);
             return true;
@@ -107,6 +106,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     @Override
     public boolean login(String username, String password) throws RemoteException {
         return dbManager.checkLogin(username, password);
+    }
+
+    @Override
+    public byte[] getSalt(String username) throws RemoteException {
+        return dbManager.getSalt(username);
     }
 
 }

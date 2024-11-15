@@ -10,4 +10,5 @@ public interface ServerInterface extends Remote {
     ClientInterface getClient(String username) throws RemoteException;
     void requestAcepted(String requestSender, String requestReceiver) throws RemoteException;
     boolean login(String username, String password) throws RemoteException;
+    byte[] getSalt(String username) throws RemoteException;
 }

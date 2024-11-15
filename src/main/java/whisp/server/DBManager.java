@@ -3,6 +3,7 @@ package whisp.server;
 import whisp.interfaces.ClientInterface;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 
@@ -91,5 +92,23 @@ public class DBManager {
             System.err.println("Error checking login for " + username + " " + e.getMessage());
         }
         return false;
+    }
+
+    public byte[] getSalt (String username){
+        String query = "SELECT salt FROM \"user\" WHERE username = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, username);
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return Base64.getDecoder().decode(rs.getString("salt").getBytes());
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking login for " + username + " " + e.getMessage());
+        }
+        return null;
     }
 }
