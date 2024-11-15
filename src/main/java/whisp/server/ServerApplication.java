@@ -12,8 +12,7 @@ public class ServerApplication {
 
     public static void main(String[] args) {
         try {
-
-            System.setProperty("java.rmi.server.hostname", "192.168.1.135");
+            System.setProperty("java.rmi.server.hostname", "192.168.1.140");
             Registry registry = LocateRegistry.createRegistry(SERVER_PORT);
             ServerInterface server = new Server();
             registry.rebind("MessagingServer", server);

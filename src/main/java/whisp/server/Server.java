@@ -3,6 +3,7 @@ package whisp.server;
 import whisp.interfaces.ClientInterface;
 import whisp.interfaces.ServerInterface;
 
+import java.io.Serializable;
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
@@ -12,7 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class Server extends UnicastRemoteObject implements ServerInterface {
+public class Server extends UnicastRemoteObject implements ServerInterface, Serializable {
 
     DBManager dbManager;
     HashMap<String, ClientInterface> clients = new HashMap<>();
@@ -32,11 +33,14 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
                 clientFriendHashMap.put(friend, clients.get(friend));
             }
         }
-        client.receiveActiveClients(clientFriendHashMap);
+        try{
+            client.receiveActiveClients(clientFriendHashMap);
+        } catch (RemoteException e) {
+            System.err.println("Error sending active clients");
+        }
         for (ClientInterface c : clients.values()) {
             if(dbManager.areFriends(c.getUsername(), client.getUsername())){
                 c.receiveNewClient(client);
-                System.out.println(client);
             }
         }
         clients.put(client.getUsername(), client);

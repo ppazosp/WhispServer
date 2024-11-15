@@ -3,6 +3,7 @@ module whisp.server {
     requires javafx.fxml;
     requires java.rmi;
     requires java.sql;
+    requires jdk.jshell;
 
 
     opens whisp.server to javafx.fxml;

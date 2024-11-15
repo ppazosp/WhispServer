@@ -75,6 +75,21 @@ public class DBManager {
     }
 
     public boolean checkLogin(String username, String password) {
-        return true;
+        String query = "SELECT COUNT(*) FROM \"user\" WHERE username = ? AND password = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking login for " + username + " " + e.getMessage());
+        }
+        return false;
     }
 }
