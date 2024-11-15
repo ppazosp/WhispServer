@@ -32,7 +32,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
                 clientFriendHashMap.put(friend, clients.get(friend));
             }
         }
-        client.receiveActiveClients(clientFriendHashMap);
+        try{
+            client.receiveActiveClients(clientFriendHashMap);
+        } catch (RemoteException e) {
+            System.err.println("Error sending active clients");
+            e.printStackTrace();
+        }
         for (ClientInterface c : clients.values()) {
             if(dbManager.areFriends(c.getUsername(), client.getUsername())){
                 c.receiveNewClient(client);
