@@ -85,6 +85,26 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         return false;
     }
 
+    @Override
+    public ClientInterface getClient(String username) throws RemoteException {
+        return clients.get(username);
+    }
+
+    @Override
+    public void requestAcepted(String requestSender, String requestReceiver) {
+        dbManager.addFriend(requestSender, requestReceiver);
+        try {
+            clients.get(requestSender).receiveNewClient(clients.get(requestReceiver));
+        } catch (RemoteException e) {
+            System.err.println("Error sending new friend notification");
+        }
+    }
+
+    @Override
+    public boolean login(String username, String password) throws RemoteException {
+        return dbManager.checkLogin(username, password);
+    }
+
 }
 
 

@@ -59,4 +59,22 @@ public class DBManager {
         }
         return false;
     }
+
+    public void addFriend(String requestSender, String requestReceiver) {
+        String query = "INSERT INTO friendship (friend1, friend2) VALUES (?, ?)";
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, requestSender);
+            stmt.setString(2, requestReceiver);
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("Error adding friendship between " + requestSender + " and " + requestReceiver);
+        }
+    }
+
+    public boolean checkLogin(String username, String password) {
+        return true;
+    }
 }
