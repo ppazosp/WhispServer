@@ -21,7 +21,6 @@ public class ServerApplication {
 
         } catch (Exception e) {
             System.err.println("Error starting server");
-            e.printStackTrace();
         }
     }
 }

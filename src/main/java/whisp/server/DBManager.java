@@ -111,4 +111,40 @@ public class DBManager {
         }
         return null;
     }
+
+    public void register(String username, String password, String salt){
+        String query = "INSERT INTO \"user\" (username, password, salt) VALUES (?, ?, ?)";
+
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            stmt.setString(3, salt);
+
+            stmt.executeUpdate();
+            System.out.println("User registered successfully: " + username);
+
+        } catch (SQLException e) {
+            System.err.println("Error registering user: " + username + " - " + e.getMessage());
+        }
+    }
+
+    public void changePassword(String username, String password, String salt){
+        String query = "UPDATE \"user\" SET password = ?, salt = ? WHERE username = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, password);
+            stmt.setString(2, salt);
+            stmt.setString(3, username);
+
+            stmt.executeUpdate();
+            System.out.println("Password successfully updated for user: " + username);
+
+        } catch (SQLException e) {
+            System.err.println("Error updating password for user: " + username + " - " + e.getMessage());
+        }
+    }
 }
