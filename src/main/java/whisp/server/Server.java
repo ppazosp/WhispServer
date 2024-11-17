@@ -113,6 +113,17 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         return dbManager.getSalt(username);
     }
 
+    @Override
+    public void register(String username, String password, String salt) throws RemoteException {
+        dbManager.register(username, password, salt);
+    }
+
+    @Override
+    public void changePassword(String username, String password, String salt) throws RemoteException {
+        dbManager.changePassword(username, password, salt);
+    }
+
+
 }
 
 
