@@ -4,8 +4,9 @@ module whisp.server {
     requires java.rmi;
     requires java.sql;
     requires jdk.jshell;
-    requires org.bouncycastle.provider;
     requires org.bouncycastle.pkix;
+    requires org.bouncycastle.provider;
+
 
     opens whisp.server to javafx.fxml;
     exports whisp.server;
