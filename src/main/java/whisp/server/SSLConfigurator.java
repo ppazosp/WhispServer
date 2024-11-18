@@ -17,7 +17,7 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
-public class SSLconfigurator {
+public class SSLConfigurator {
     private static final String SERVER_KEYSTORE = "server.keystore";
     private static final String SERVER_TRUSTSTORE = "server.truststore";
     private static final String CLIENT_KEYSTORE_PREFIX = "client";

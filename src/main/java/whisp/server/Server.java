@@ -1,11 +1,13 @@
 package whisp.server;
 
+import whisp.Logger;
 import whisp.interfaces.ClientInterface;
 import whisp.interfaces.ServerInterface;
 
 import java.io.Serializable;
-import java.rmi.*;
+import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,28 +53,47 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
         executor.scheduleAtFixedRate(() -> {
-            for (Map.Entry<String, ClientInterface> clientEntry : clients.entrySet()) {
-                try {
-                    clientEntry.getValue().ping();
-                } catch (RemoteException e) {
-                   disconnectClient(clientEntry.getKey());
+            try {
+                Logger.info("Number of clients connected: " + clients.values().size());
+                for (Map.Entry<String, ClientInterface> clientEntry : clients.entrySet()) {
+                    try {
+                        clientEntry.getValue().ping();
+                    } catch (RemoteException e) {
+                        disconnectClient(clientEntry.getKey());
+                        break;
+                    }
                 }
+            }catch (Exception e){
+                Logger.error("Error en checkIfAlive");
+                e.printStackTrace();
             }
         }, 0, 5, TimeUnit.SECONDS);
     }
 
     //llamar a esta funcion ante cualquier RemoteException por perdidad de conexion con los clientes
-    public void disconnectClient(String clientUsername ) {
-        try {
-            System.out.println(clientUsername + " disconnected");
-            ClientInterface deadClient = clients.get(clientUsername);
-            clients.remove(clientUsername);
-            for (ClientInterface otherClient : clients.values()) {
-                if(dbManager.areFriends(otherClient.getUsername(), clientUsername)) otherClient.disconnectClient(deadClient);
-            }
+    public synchronized void disconnectClient(String clientUsername) {
+        System.out.println(clientUsername + " disconnected");
+        ClientInterface deadClient = clients.get(clientUsername);
 
-        } catch (RemoteException ex) {
-            System.err.println("Error notifying disconnection");
+        clients.remove(clientUsername);
+
+        String extraClientToDisconnect = "";
+
+        for (Map.Entry<String, ClientInterface> entry : clients.entrySet()) {
+            ClientInterface otherClient = entry.getValue();
+            String otherClientUsername = entry.getKey();
+
+            try {
+                if (dbManager.areFriends(otherClientUsername, clientUsername)) {
+                    otherClient.disconnectClient(deadClient);
+                }
+            } catch (Exception e) {
+                extraClientToDisconnect = otherClientUsername;
+            }
+        }
+
+        if (!extraClientToDisconnect.isEmpty()){
+            disconnectClient(extraClientToDisconnect);
         }
     }
 
