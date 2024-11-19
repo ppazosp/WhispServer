@@ -16,6 +16,26 @@ public class DBManager {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
 
+    public boolean isUsernameTaken(String username){
+        String query = "SELECT COUNT(*) FROM \"user\" WHERE username = ?";
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, username);
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error checking username availability: " + e.getMessage());
+        }
+
+        return false;
+    }
+
     public List<String> getFriends(String username) {
         ArrayList<String> friends = new ArrayList<>();
 
@@ -94,7 +114,7 @@ public class DBManager {
         return false;
     }
 
-    public byte[] getSalt (String username){
+    public String getSalt (String username){
         String query = "SELECT salt FROM \"user\" WHERE username = ?";
 
         try (Connection conn = connect();
@@ -104,7 +124,7 @@ public class DBManager {
 
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                return Base64.getDecoder().decode(rs.getString("salt").getBytes());
+                return rs.getString("salt");
             }
         } catch (SQLException e) {
             System.err.println("Error checking login for " + username + " " + e.getMessage());
@@ -147,5 +167,23 @@ public class DBManager {
         } catch (SQLException e) {
             System.err.println("Error updating password for user: " + username + " - " + e.getMessage());
         }
+    }
+
+    public String getAuthKey(String username){
+        String query = "SELECT auth_key FROM \"user\" WHERE username = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, username);
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString(1).trim();
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting auth key for " + username + " " + e.getMessage());
+        }
+        return null;
     }
 }

@@ -10,7 +10,9 @@ public interface ServerInterface extends Remote {
     ClientInterface getClient(String username) throws RemoteException;
     void requestAcepted(String requestSender, String requestReceiver) throws RemoteException;
     boolean login(String username, String password) throws RemoteException;
-    byte[] getSalt(String username) throws RemoteException;
+    String getSalt(String username) throws RemoteException;
+    boolean checkUsernameAvailability(String username) throws RemoteException;
     String register(String username, String password, String salt) throws RemoteException;
+    boolean validate(String username, int code) throws RemoteException;
     void changePassword(String username, String password, String salt) throws RemoteException;
 }

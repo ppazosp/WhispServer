@@ -1,5 +1,6 @@
 package whisp.server;
 
+import com.warrenstrange.googleauth.GoogleAuthenticator;
 import whisp.Logger;
 import whisp.interfaces.ClientInterface;
 import whisp.interfaces.ServerInterface;
@@ -127,24 +128,48 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     }
 
     @Override
-    public byte[] getSalt(String username) throws RemoteException {
+    public String getSalt(String username) throws RemoteException {
         return dbManager.getSalt(username);
+    }
+
+    @Override
+    public boolean checkUsernameAvailability(String username) throws RemoteException {
+        return dbManager.isUsernameTaken(username);
     }
 
     @Override
     public String register(String username, String password, String salt) throws RemoteException {
         try {
             String authKey = TFAService.generateSecretKey();
-            String hashedAuthKey = Encrypter.getHashedPassword(authKey, Base64.getDecoder().decode(salt));
+            String aesKey = Encrypter.getKey(new StringBuilder(username).reverse().toString(), salt);
+            String encryptedAuthKey = Encrypter.encrypt(authKey, aesKey);
 
-            dbManager.register(username, password, hashedAuthKey, salt);
+            dbManager.register(username, password, encryptedAuthKey, salt);
 
             return TFAService.generateQRCode(authKey, username);
         }catch (Exception e){
             Logger.error("Could not register " + username);
+            e.printStackTrace();
         }
 
         return "";
+    }
+
+    @Override
+    public boolean validate(String username, int code) throws RemoteException {
+        try {
+            GoogleAuthenticator gAuth = new GoogleAuthenticator();
+            String salt = dbManager.getSalt(username);
+            String encryptedAuthKey = dbManager.getAuthKey(username);
+
+            String authKey = Encrypter.decrypt(encryptedAuthKey, Encrypter.getKey(new StringBuilder(username).reverse().toString(), salt));
+            return gAuth.authorize(authKey, code);
+        }catch (Exception e){
+            Logger.error("Could not validate user " + username);
+            e.printStackTrace();
+        }
+
+        return false;
     }
 
     @Override
