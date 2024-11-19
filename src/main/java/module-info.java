@@ -6,6 +6,9 @@ module whisp.server {
     requires jdk.jshell;
     requires org.bouncycastle.pkix;
     requires org.bouncycastle.provider;
+    requires googleauth;
+    requires com.google.zxing;
+    requires com.google.zxing.javase;
 
 
     opens whisp.server to javafx.fxml;

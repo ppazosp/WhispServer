@@ -112,15 +112,16 @@ public class DBManager {
         return null;
     }
 
-    public void register(String username, String password, String salt){
-        String query = "INSERT INTO \"user\" (username, password, salt) VALUES (?, ?, ?)";
+    public void register(String username, String password, String authKey, String salt){
+        String query = "INSERT INTO \"user\" (username, password, auth_key, salt) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, username);
             stmt.setString(2, password);
-            stmt.setString(3, salt);
+            stmt.setString(3, authKey);
+            stmt.setString(4, salt);
 
             stmt.executeUpdate();
             System.out.println("User registered successfully: " + username);

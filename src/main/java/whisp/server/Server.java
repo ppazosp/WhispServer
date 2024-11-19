@@ -7,7 +7,7 @@ import whisp.interfaces.ServerInterface;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,9 +97,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         }
     }
 
-    //TODO: funcion para comprobar que un usuario esta conectado
-
-
     @Override
     public boolean sendRequest(String requestSender, String requestReceiver) throws RemoteException {
         if(clients.containsKey(requestReceiver)) {
@@ -135,8 +132,19 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     }
 
     @Override
-    public void register(String username, String password, String salt) throws RemoteException {
-        dbManager.register(username, password, salt);
+    public String register(String username, String password, String salt) throws RemoteException {
+        try {
+            String authKey = TFAService.generateSecretKey();
+            String hashedAuthKey = Encrypter.getHashedPassword(authKey, Base64.getDecoder().decode(salt));
+
+            dbManager.register(username, password, hashedAuthKey, salt);
+
+            return TFAService.generateQRCode(authKey, username);
+        }catch (Exception e){
+            Logger.error("Could not register " + username);
+        }
+
+        return "";
     }
 
     @Override
