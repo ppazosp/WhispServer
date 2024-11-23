@@ -8,10 +8,7 @@ import whisp.interfaces.ServerInterface;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +28,13 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     public void registerClient(ClientInterface client) throws RemoteException {
         List<String> clientFriendsList = dbManager.getFriends(client.getUsername());
         HashMap<String, ClientInterface> clientFriendHashMap = new HashMap<>();
+        List<String> clientRequestsList = dbManager.getFriendRequests(client.getUsername());
+
+        //imprimir la lista de amigos como un arraylist
+        for (String friend : clientFriendsList) {
+            System.out.println(friend);
+        }
+
         for (String friend : clientFriendsList) {
             if(clients.containsKey(friend)) {
                 clientFriendHashMap.put(friend, clients.get(friend));
@@ -38,6 +42,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         }
         try{
             client.receiveActiveClients(clientFriendHashMap);
+
         } catch (RemoteException e) {
             System.err.println("Error sending active clients");
         }
@@ -45,6 +50,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
             if(dbManager.areFriends(c.getUsername(), client.getUsername())){
                 c.receiveNewClient(client);
             }
+        }
+        try {
+            client.receiveBDrequests(clientRequestsList);
+        } catch (RemoteException e) {
+            System.err.println("Error sending friend requests");
         }
         clients.put(client.getUsername(), client);
         System.out.println(client.getUsername() + " connected");
@@ -103,6 +113,9 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         if(clients.containsKey(requestReceiver)) {
             clients.get(requestReceiver).receiveFriendRequest(requestSender);
             return true;
+        }else{
+            //CHECK: if client is not connected, store request in db
+            dbManager.addFriendRequest(requestSender, requestReceiver);
         }
         return false;
     }
@@ -164,6 +177,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
 
             String authKey = Encrypter.decrypt(encryptedAuthKey, Encrypter.getKey(new StringBuilder(username).reverse().toString(), salt));
             return gAuth.authorize(authKey, code);
+
         }catch (Exception e){
             Logger.error("Could not validate user " + username);
             e.printStackTrace();
@@ -176,6 +190,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     public void changePassword(String username, String password, String salt) throws RemoteException {
         dbManager.changePassword(username, password, salt);
     }
+
+
 
 
 }

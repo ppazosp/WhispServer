@@ -13,7 +13,7 @@ public class ServerApplication {
 
     public static void main(String[] args) {
         try {
-            System.setProperty("java.rmi.server.hostname", "100.79.5.93");
+            System.setProperty("java.rmi.server.hostname", "localhost");
             System.setProperty("https.protocols", "TLSv1.2,TLSv1.3");
             System.setProperty("javax.rmi.ssl.server.enabledProtocols", "TLSv1.2,TLSv1.3");
             System.setProperty("javax.net.ssl.keyStore", "server.keystore");

@@ -186,4 +186,41 @@ public class DBManager {
         }
         return null;
     }
+
+    public void addFriendRequest(String requestSender, String requestReceiver) {
+        String query = "INSERT INTO pending_request (receiver_user, sender_user) VALUES (?, ?)";
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, requestReceiver); // El usuario que recibe la solicitud
+            stmt.setString(2, requestSender);  // El usuario que envía la solicitud
+
+            stmt.executeUpdate();
+            System.out.println("Friend request sent from " + requestSender + " to " + requestReceiver);
+
+        } catch (SQLException e) {
+            System.err.println("Error adding friend request from " + requestSender + " to " + requestReceiver + ": " + e.getMessage());
+        }
+
+    }
+
+    public ArrayList<String> getFriendRequests(String requestReceiver) {
+        ArrayList<String> requests = new ArrayList<>();
+        String query = "SELECT sender_user FROM pending_request WHERE receiver_user = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, requestReceiver);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                requests.add(rs.getString("sender_user"));
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error getting friend requests for " + requestReceiver + ": " + e.getMessage());
+        }
+        return requests;
+    }
 }

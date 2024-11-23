@@ -14,4 +14,5 @@ public interface ClientInterface extends Remote {
     void disconnectClient(ClientInterface client) throws RemoteException;
     void ping() throws RemoteException;
     void receiveFriendRequest(String requestSender) throws RemoteException;
+    void receiveBDrequests(List<String> requestSenders) throws RemoteException;
 }
