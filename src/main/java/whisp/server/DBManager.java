@@ -1,10 +1,7 @@
 package whisp.server;
 
-import whisp.interfaces.ClientInterface;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 
 public class DBManager {
@@ -206,7 +203,7 @@ public class DBManager {
 
     public ArrayList<String> getFriendRequests(String requestReceiver) {
         ArrayList<String> requests = new ArrayList<>();
-        String query = "SELECT sender_user FROM pending_request WHERE receiver_user = ?";
+        String query = "SELECT sender_user FROM pending_request WHERE receiver_user = ? and acepted = false";
 
         try (Connection conn = connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -223,4 +220,22 @@ public class DBManager {
         }
         return requests;
     }
+
+    public void deleteFriendRequest(String requestSender, String requestReceiver) {
+        String query = "DELETE FROM pending_request WHERE sender_user = ? AND receiver_user = ?";
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, requestSender);
+            stmt.setString(2, requestReceiver);
+
+            stmt.executeUpdate();
+            System.out.println("Friend request from " + requestSender + " to " + requestReceiver + " deleted");
+
+        } catch (SQLException e) {
+            System.err.println("Error deleting friend request from " + requestSender + " to " + requestReceiver + ": " + e.getMessage());
+        }
+    }
+
+
 }

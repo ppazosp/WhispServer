@@ -38,6 +38,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         for (String friend : clientFriendsList) {
             if(clients.containsKey(friend)) {
                 clientFriendHashMap.put(friend, clients.get(friend));
+
             }
         }
         try{
@@ -51,12 +52,16 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
                 c.receiveNewClient(client);
             }
         }
+        //Solicitudes pendientes
         try {
             client.receiveBDrequests(clientRequestsList);
         } catch (RemoteException e) {
             System.err.println("Error sending friend requests");
         }
+
+        //añadir el cliente a la lista de clientes
         clients.put(client.getUsername(), client);
+
         System.out.println(client.getUsername() + " connected");
     }
 
@@ -110,12 +115,10 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
 
     @Override
     public boolean sendRequest(String requestSender, String requestReceiver) throws RemoteException {
+        dbManager.addFriendRequest(requestSender, requestReceiver);
         if(clients.containsKey(requestReceiver)) {
             clients.get(requestReceiver).receiveFriendRequest(requestSender);
             return true;
-        }else{
-            //CHECK: if client is not connected, store request in db
-            dbManager.addFriendRequest(requestSender, requestReceiver);
         }
         return false;
     }
@@ -126,13 +129,14 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     }
 
     @Override
-    public void requestAcepted(String requestSender, String requestReceiver) {
+    public void requestAcepted(String requestSender, String requestReceiver) throws RemoteException {
+
         dbManager.addFriend(requestSender, requestReceiver);
-        try {
+        //si el cliente está conectado se le envía el cliente que ha aceptado la solicitud
+        if(clients.containsKey(requestSender)) {
             clients.get(requestSender).receiveNewClient(clients.get(requestReceiver));
-        } catch (RemoteException e) {
-            System.err.println("Error sending new friend notification");
         }
+        dbManager.deleteFriendRequest(requestSender, requestReceiver);
     }
 
     @Override
