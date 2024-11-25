@@ -114,13 +114,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     }
 
     @Override
-    public boolean sendRequest(String requestSender, String requestReceiver) throws RemoteException {
+    public void sendRequest(String requestSender, String requestReceiver) throws RemoteException {
         dbManager.addFriendRequest(requestSender, requestReceiver);
         if(clients.containsKey(requestReceiver)) {
             clients.get(requestReceiver).receiveFriendRequest(requestSender);
-            return true;
         }
-        return false;
     }
 
     @Override

@@ -203,7 +203,7 @@ public class DBManager {
 
     public ArrayList<String> getFriendRequests(String requestReceiver) {
         ArrayList<String> requests = new ArrayList<>();
-        String query = "SELECT sender_user FROM pending_request WHERE receiver_user = ? and acepted = false";
+        String query = "SELECT sender_user FROM pending_request WHERE receiver_user = ?";
 
         try (Connection conn = connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 public interface ServerInterface extends Remote {
     void registerClient(ClientInterface client) throws RemoteException;
-    boolean sendRequest(String requestSender, String requestReceiver) throws RemoteException;
+    void sendRequest(String requestSender, String requestReceiver) throws RemoteException;
     ClientInterface getClient(String username) throws RemoteException;
     void requestAcepted(String requestSender, String requestReceiver) throws RemoteException;
     boolean login(String username, String password) throws RemoteException;
