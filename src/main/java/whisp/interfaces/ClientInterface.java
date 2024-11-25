@@ -1,6 +1,5 @@
 package whisp.interfaces;
 
-import java.io.Serializable;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -15,4 +14,5 @@ public interface ClientInterface extends Remote {
     void ping() throws RemoteException;
     void receiveFriendRequest(String requestSender) throws RemoteException;
     void receiveBDrequests(List<String> requestSenders) throws RemoteException;
+    void receiveRequestCancelled(String senderName, String receiverName) throws RemoteException;
 }

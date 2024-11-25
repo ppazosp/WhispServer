@@ -193,7 +193,13 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         dbManager.changePassword(username, password, salt);
     }
 
-
+    @Override
+    public void cancelRequest(String username, String senderName) throws RemoteException {
+        dbManager.deleteFriendRequest(senderName, username);
+        if(clients.containsKey(senderName)) {
+            clients.get(senderName).receiveRequestCancelled(senderName,username);
+        }
+    }
 
 
 }

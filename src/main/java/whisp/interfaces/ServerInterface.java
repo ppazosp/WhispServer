@@ -15,5 +15,6 @@ public interface ServerInterface extends Remote {
     String register(String username, String password, String salt) throws RemoteException;
     boolean validate(String username, int code) throws RemoteException;
     void changePassword(String username, String password, String salt) throws RemoteException;
+    void cancelRequest(String username, String senderName) throws RemoteException;
 
 }
