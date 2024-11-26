@@ -9,6 +9,7 @@ module whisp.server {
     requires googleauth;
     requires com.google.zxing;
     requires com.google.zxing.javase;
+    requires commons.logging;
 
 
     opens whisp.server to javafx.fxml;

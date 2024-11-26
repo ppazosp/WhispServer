@@ -1,10 +1,18 @@
 package whisp.server;
 
+import org.apache.commons.logging.Log;
+import whisp.utils.Logger;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DBManager {
+
+    //*******************************************************************************************
+    //* ATTRIBUTES
+    //*******************************************************************************************
+
     private static final String DB_URL = "jdbc:postgresql://aws-0-eu-west-3.pooler.supabase.com:6543/postgres";
     private static final String DB_USER = "postgres.cdsycjhyadjvjrhdwtut";
     private static final String DB_PASSWORD = "UT3y6PVcnCx2TxgT";
@@ -13,8 +21,20 @@ public class DBManager {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
 
+    //*******************************************************************************************
+    //* QUERY METHODS
+    //*******************************************************************************************
+
+    /**
+     * Verifica si un nombre de usuario ya está en uso en la base de datos.
+     *
+     * @param username el nombre de usuario a verificar.
+     * @return {@code true} si el nombre de usuario ya está tomado, {@code false} en caso contrario.
+     */
     public boolean isUsernameTaken(String username){
+
         String query = "SELECT COUNT(*) FROM \"user\" WHERE username = ?";
+
         try (Connection conn = connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -22,18 +42,26 @@ public class DBManager {
 
             ResultSet rs = stmt.executeQuery();
 
-            if (rs.next()) {
-                return rs.getInt(1) > 0;
-            }
+            boolean val = rs.getInt(1) > 0;
+
+            Logger.info("Query completed correctly");
+
+            return val;
 
         } catch (SQLException e) {
-            System.err.println("Error checking username availability: " + e.getMessage());
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
-
-        return false;
     }
 
+    /**
+     * Obtiene de la base de datos la lista de amigos de un usuario específico.
+     *
+     * @param username el nombre de usuario para el que se buscan los amigos.
+     * @return un objeto {@link List} con los nombres de los amigos del usuario.
+     */
     public List<String> getFriends(String username) {
+
         ArrayList<String> friends = new ArrayList<>();
 
         String query =
@@ -52,13 +80,24 @@ public class DBManager {
                 friends.add(friendName);
             }
 
+            Logger.info("Query completed correctly");
+
         } catch (SQLException e) {
-            System.err.println("Error recovering friends for " + username);
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
         return friends;
     }
 
+    /**
+     * Verifica si dos usuarios son amigos en la base de datos.
+     *
+     * @param client1 el nombre del primer usuario.
+     * @param client2 el nombre del segundo usuario.
+     * @return {@code true} si los usuarios son amigos, {@code false} en caso contrario.
+     */
     public boolean areFriends(String client1, String client2) {
+
         String query = "SELECT COUNT(*) FROM friendship WHERE (friend1 = ? AND friend2 = ?) OR (friend1 = ? AND friend2 = ?)";
         try (Connection conn = connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -69,16 +108,27 @@ public class DBManager {
             stmt.setString(4, client1);
 
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0;
-            }
+
+            boolean val =  rs.getInt(1) > 0;
+
+            Logger.info("Query completed correctly");
+
+            return val;
+
         } catch (SQLException e) {
-            System.err.println("Error checking friendship status between " + client1 + " and " + client2);
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
-        return false;
     }
 
+    /**
+     * Añade una nueva amistad entre dos usuarios a la base de datos.
+     *
+     * @param requestSender el usuario que envió la solicitud de amistad.
+     * @param requestReceiver el usuario que aceptó la solicitud de amistad.
+     */
     public void addFriend(String requestSender, String requestReceiver) {
+
         String query = "INSERT INTO friendship (friend1, friend2) VALUES (?, ?)";
         try (Connection conn = connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -87,12 +137,23 @@ public class DBManager {
             stmt.setString(2, requestReceiver);
             stmt.executeUpdate();
 
+            Logger.info("Query completed correctly");
+
         } catch (SQLException e) {
-            System.err.println("Error adding friendship between " + requestSender + " and " + requestReceiver);
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
     }
 
+    /**
+     * Verifica las credenciales de inicio de sesión de un usuario en la base de datos.
+     *
+     * @param username el nombre de usuario.
+     * @param password la contraseña del usuario.
+     * @return {@code true} si las credenciales son correctas, {@code false} en caso contrario.
+     */
     public boolean checkLogin(String username, String password) {
+
         String query = "SELECT COUNT(*) FROM \"user\" WHERE username = ? AND password = ?";
 
         try (Connection conn = connect();
@@ -102,16 +163,27 @@ public class DBManager {
             stmt.setString(2, password);
 
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0;
-            }
+
+            boolean val =  rs.getInt(1) > 0;
+
+            Logger.info("Query completed correctly");
+
+            return val;
+
         } catch (SQLException e) {
-            System.err.println("Error checking login for " + username + " " + e.getMessage());
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
-        return false;
     }
 
+    /**
+     * Obtiene de la base de datos el salt asociado a un nombre de usuario.
+     *
+     * @param username el nombre de usuario.
+     * @return el salt asociada al usuario, o null si no se encuentra.
+     */
     public String getSalt (String username){
+
         String query = "SELECT salt FROM \"user\" WHERE username = ?";
 
         try (Connection conn = connect();
@@ -120,16 +192,29 @@ public class DBManager {
             stmt.setString(1, username);
 
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString("salt");
-            }
+
+            String salt = rs.getString("salt");
+
+            Logger.info("Query completed correctly");
+
+            return salt;
+
         } catch (SQLException e) {
-            System.err.println("Error checking login for " + username + " " + e.getMessage());
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
-        return null;
     }
 
+    /**
+     * Registra un nuevo usuario en la base de datos con su información de autenticación.
+     *
+     * @param username el nombre del usuario.
+     * @param password la contraseña del usuario.
+     * @param authKey la clave de autenticación generada para el usuario.
+     * @param salt la sal asociada al usuario.
+     */
     public void register(String username, String password, String authKey, String salt){
+
         String query = "INSERT INTO \"user\" (username, password, auth_key, salt) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = connect();
@@ -141,14 +226,24 @@ public class DBManager {
             stmt.setString(4, salt);
 
             stmt.executeUpdate();
-            System.out.println("User registered successfully: " + username);
+
+            Logger.info("Query completed correctly");
 
         } catch (SQLException e) {
-            System.err.println("Error registering user: " + username + " - " + e.getMessage());
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
     }
 
+    /**
+     * Cambia la contraseña de un usuario y actualiza su salt asociado en la base de datos.
+     *
+     * @param username el nombre del usuario.
+     * @param password la nueva contraseña.
+     * @param salt la nueva sal asociada.
+     */
     public void changePassword(String username, String password, String salt){
+
         String query = "UPDATE \"user\" SET password = ?, salt = ? WHERE username = ?";
 
         try (Connection conn = connect();
@@ -159,14 +254,23 @@ public class DBManager {
             stmt.setString(3, username);
 
             stmt.executeUpdate();
-            System.out.println("Password successfully updated for user: " + username);
+
+            Logger.info("Query completed correctly");
 
         } catch (SQLException e) {
-            System.err.println("Error updating password for user: " + username + " - " + e.getMessage());
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
     }
 
+    /**
+     * Obtiene de la base de datos la clave de autenticación asociada a un nombre de usuario.
+     *
+     * @param username el nombre de usuario.
+     * @return la clave de autenticación, o null si no se encuentra.
+     */
     public String getAuthKey(String username){
+
         String query = "SELECT auth_key FROM \"user\" WHERE username = ?";
 
         try (Connection conn = connect();
@@ -175,16 +279,27 @@ public class DBManager {
             stmt.setString(1, username);
 
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString(1).trim();
-            }
+
+            String authKey = rs.getString(1).trim();
+
+            Logger.info("Query completed correctly");
+
+            return authKey;
+
         } catch (SQLException e) {
-            System.err.println("Error getting auth key for " + username + " " + e.getMessage());
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
-        return null;
     }
 
+    /**
+     * Añade una nueva solicitud de amistad a la base de datos.
+     *
+     * @param requestSender el nombre del usuario que envía la solicitud.
+     * @param requestReceiver el nombre del usuario que recibe la solicitud.
+     */
     public void addFriendRequest(String requestSender, String requestReceiver) {
+
         String query = "INSERT INTO pending_request (receiver_user, sender_user) VALUES (?, ?)";
         try (Connection conn = connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -193,15 +308,24 @@ public class DBManager {
             stmt.setString(2, requestSender);  // El usuario que envía la solicitud
 
             stmt.executeUpdate();
-            System.out.println("Friend request sent from " + requestSender + " to " + requestReceiver);
+
+            Logger.info("Query completed correctly");
 
         } catch (SQLException e) {
-            System.err.println("Error adding friend request from " + requestSender + " to " + requestReceiver + ": " + e.getMessage());
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
 
     }
 
+    /**
+     * Obtiene todas las solicitudes de amistad pendientes en la base de datos para un usuario.
+     *
+     * @param requestReceiver el nombre del usuario que recibe las solicitudes.
+     * @return una lista de nombres de los usuarios que han enviado solicitudes de amistad.
+     */
     public ArrayList<String> getFriendRequests(String requestReceiver) {
+
         ArrayList<String> requests = new ArrayList<>();
         String query = "SELECT sender_user FROM pending_request WHERE receiver_user = ?";
 
@@ -215,14 +339,25 @@ public class DBManager {
                 requests.add(rs.getString("sender_user"));
             }
 
+            Logger.info("Query completed correctly");
+
         } catch (SQLException e) {
-            System.err.println("Error getting friend requests for " + requestReceiver + ": " + e.getMessage());
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
         return requests;
     }
 
+    /**
+     * Elimina una solicitud de amistad específica de la base de datos.
+     *
+     * @param requestSender el nombre del usuario que envió la solicitud.
+     * @param requestReceiver el nombre del usuario que recibió la solicitud.
+     */
     public void deleteFriendRequest(String requestSender, String requestReceiver) {
+
         String query = "DELETE FROM pending_request WHERE sender_user = ? AND receiver_user = ?";
+
         try (Connection conn = connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -230,10 +365,12 @@ public class DBManager {
             stmt.setString(2, requestReceiver);
 
             stmt.executeUpdate();
-            System.out.println("Friend request from " + requestSender + " to " + requestReceiver + " deleted");
+
+            Logger.info("Query completed correctly");
 
         } catch (SQLException e) {
-            System.err.println("Error deleting friend request from " + requestSender + " to " + requestReceiver + ": " + e.getMessage());
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
         }
     }
 
