@@ -1,4 +1,4 @@
-package whisp.server;
+package whisp.utils;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509v3CertificateBuilder;

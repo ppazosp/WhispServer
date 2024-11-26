@@ -1,6 +1,7 @@
 package whisp.server;
 
 import whisp.interfaces.ServerInterface;
+import whisp.utils.SSLConfigurator;
 
 import javax.net.ssl.SSLContext;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
