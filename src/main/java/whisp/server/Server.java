@@ -54,7 +54,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         }
         //Solicitudes pendientes
         try {
-            client.receiveBDrequests(clientRequestsList);
+            client.receiveRequests(clientRequestsList);
         } catch (RemoteException e) {
             System.err.println("Error sending friend requests");
         }
@@ -127,7 +127,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     }
 
     @Override
-    public void requestAcepted(String requestSender, String requestReceiver) throws RemoteException {
+    public void requestAccepted(String requestSender, String requestReceiver) throws RemoteException {
 
         dbManager.addFriend(requestSender, requestReceiver);
         //si el cliente está conectado se le envía el cliente que ha aceptado la solicitud
@@ -197,7 +197,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     public void cancelRequest(String username, String senderName) throws RemoteException {
         dbManager.deleteFriendRequest(senderName, username);
         if(clients.containsKey(senderName)) {
-            clients.get(senderName).receiveRequestCancelled(senderName,username);
+            clients.get(senderName).receiveRequestCancelled(username);
         }
     }
 

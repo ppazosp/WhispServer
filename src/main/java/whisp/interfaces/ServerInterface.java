@@ -8,7 +8,7 @@ public interface ServerInterface extends Remote {
     void registerClient(ClientInterface client) throws RemoteException;
     void sendRequest(String requestSender, String requestReceiver) throws RemoteException;
     ClientInterface getClient(String username) throws RemoteException;
-    void requestAcepted(String requestSender, String requestReceiver) throws RemoteException;
+    void requestAccepted(String requestSender, String requestReceiver) throws RemoteException;
     boolean login(String username, String password) throws RemoteException;
     String getSalt(String username) throws RemoteException;
     boolean checkUsernameAvailability(String username) throws RemoteException;
