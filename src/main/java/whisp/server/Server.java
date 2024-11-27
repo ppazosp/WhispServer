@@ -52,7 +52,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
      * </p>
      *
      * <p>
-     *     Busca en la base de datos los solicitudes pendientes del cliente y llama a la funcón {@link ClientInterface#receiveRequests(List)}
+     *     Busca en la base de datos los solicitudes pendientes del cliente y llama a la funcón {@link ClientInterface#receiveRequests(List, List)}
      *     para enviarselas de vuelta.
      * </p>
      *
@@ -82,11 +82,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         }
 
         Logger.info("Fetching requests...");
-        List<String> clientRequestsList = dbManager.getFriendRequests(client.getUsername());
+        List<String> clientReceivedRequestsList = dbManager.getReceivedFriendRequests(client.getUsername());
+        List<String> clientSentRequestsList = dbManager.getSentFriendRequests(client.getUsername());
 
         Logger.info("Sending back requests...");
         try {
-            client.receiveRequests(clientRequestsList);
+            client.receiveRequests(clientSentRequestsList, clientReceivedRequestsList);
         } catch (RemoteException e) {
             System.err.println("Error sending friend requests");
         }
@@ -164,6 +165,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
             Logger.info("Notifying sender...");
             clients.get(requestSender).receiveNewClient(clients.get(requestReceiver));
         }
+
+        if(clients.containsKey(requestReceiver)) {
+            Logger.info("Notifying receiver...");
+            clients.get(requestReceiver).receiveNewClient(clients.get(requestSender));
+        }
+
 
         Logger.info("Deleting request row...");
         dbManager.deleteFriendRequest(requestSender, requestReceiver);
