@@ -355,6 +355,23 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     }
 
     /**
+     * Checkea si un cliente sigue activo, si no llama a {@link Server#disconnectClient(String)} para desconectarlo.
+     *
+     * @param clientUsername el nombre del usuario a checkear.
+     * @throws RemoteException si ocurre un error remoto.
+     */
+    @Override
+    public void checkClientStatus(String clientUsername) throws RemoteException{
+        Logger.info("Checking status for user " + clientUsername + "...");
+        try{
+            clients.get(clientUsername).ping();
+        }catch (RemoteException e){
+            Logger.info( clientUsername + " is dead, disconnecting...");
+            disconnectClient(clientUsername);
+        }
+    }
+
+    /**
      * Desconecta un cliente del sistema.
      *
      * <p>
@@ -372,12 +389,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
      *
      * @param clientUsername el nombre del usuario del cliente a desconectar.
      */
-    @Override
-    public synchronized void disconnectClient(String clientUsername) {
-        System.out.println(clientUsername + " disconnected");
+    private synchronized void disconnectClient(String clientUsername) {
         ClientInterface deadClient = clients.get(clientUsername);
 
         clients.remove(clientUsername);
+
+        Logger.info(clientUsername + " disconnected");
 
         String extraClientToDisconnect = "";
 
@@ -395,6 +412,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         }
 
         if (!extraClientToDisconnect.isEmpty()){
+            Logger.info(extraClientToDisconnect + " is also dead, disconnecting...");
             disconnectClient(extraClientToDisconnect);
         }
     }
