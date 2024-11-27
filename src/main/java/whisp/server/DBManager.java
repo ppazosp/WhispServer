@@ -42,7 +42,11 @@ public class DBManager {
 
             ResultSet rs = stmt.executeQuery();
 
-            boolean val = rs.getInt(1) > 0;
+            boolean val = false;
+
+            if (rs.next()){
+                val = rs.getInt(1) > 0;
+            }
 
             Logger.info("Query completed correctly");
 
@@ -109,8 +113,11 @@ public class DBManager {
 
             ResultSet rs = stmt.executeQuery();
 
-            boolean val =  rs.getInt(1) > 0;
+            boolean val = false;
 
+            if(rs.next()){
+                val =rs.getInt(1) > 0;
+            }
             Logger.info("Query completed correctly");
 
             return val;
@@ -164,7 +171,10 @@ public class DBManager {
 
             ResultSet rs = stmt.executeQuery();
 
-            boolean val =  rs.getInt(1) > 0;
+            boolean val = false;
+            if(rs.next()) {
+                val =  rs.getInt(1) > 0;
+            }
 
             Logger.info("Query completed correctly");
 
@@ -193,7 +203,11 @@ public class DBManager {
 
             ResultSet rs = stmt.executeQuery();
 
-            String salt = rs.getString("salt");
+            String salt = "";
+
+            if(rs.next()){
+                salt = rs.getString("salt");
+            }
 
             Logger.info("Query completed correctly");
 
@@ -280,7 +294,11 @@ public class DBManager {
 
             ResultSet rs = stmt.executeQuery();
 
-            String authKey = rs.getString(1).trim();
+            String authKey = "";
+
+            if(rs.next()){
+                authKey = rs.getString(1).trim();
+            }
 
             Logger.info("Query completed correctly");
 
@@ -319,15 +337,45 @@ public class DBManager {
     }
 
     /**
-     * Obtiene todas las solicitudes de amistad pendientes en la base de datos para un usuario.
+     * Obtiene todas las solicitudes de amistad recibidas pendientes en la base de datos para un usuario.
      *
      * @param requestReceiver el nombre del usuario que recibe las solicitudes.
-     * @return una lista de nombres de los usuarios que han enviado solicitudes de amistad.
+     * @return una lista de nombres de los usuarios que han enviado las solicitudes de amistad.
      */
-    public ArrayList<String> getFriendRequests(String requestReceiver) {
+    public ArrayList<String> getReceivedFriendRequests(String requestReceiver) {
 
         ArrayList<String> requests = new ArrayList<>();
         String query = "SELECT sender_user FROM pending_request WHERE receiver_user = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, requestReceiver);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                requests.add(rs.getString("sender_user"));
+            }
+
+            Logger.info("Query completed correctly");
+
+        } catch (SQLException e) {
+            Logger.error("Check database connection");
+            throw new IllegalStateException("Stop using Eduroam", e);
+        }
+        return requests;
+    }
+
+    /**
+     * Obtiene todas las solicitudes de amistad enviadas pendientes en la base de datos para un usuario.
+     *
+     * @param requestReceiver el nombre del usuario que recibe las solicitudes.
+     * @return una lista de nombres de los usuarios que han recibido las solicitudes de amistad.
+     */
+    public ArrayList<String> getSentFriendRequests(String requestReceiver) {
+
+        ArrayList<String> requests = new ArrayList<>();
+        String query = "SELECT sender_user FROM pending_request WHERE sender_user = ?";
 
         try (Connection conn = connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
