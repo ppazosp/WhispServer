@@ -117,14 +117,23 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
      * @throws RemoteException si ocurre un error remoto.
      */
     @Override
-    public void sendRequest(String requestSender, String requestReceiver) throws RemoteException {
-        Logger.info("Request received on server, saving it on database...");
+    public boolean sendRequest(String requestSender, String requestReceiver) throws RemoteException {
+
+        Logger.info("Request received on server, checking if " + requestReceiver + " exists...");
+        if(!dbManager.isUsernameTaken(requestReceiver)){
+            Logger.info("It does not");
+            return false;
+        }
+
+        Logger.info("Saving request on database...");
         dbManager.addFriendRequest(requestSender, requestReceiver);
 
         if(clients.containsKey(requestReceiver)) {
             Logger.info("Sending request to user...");
             clients.get(requestReceiver).receiveFriendRequest(requestSender);
         }
+
+        return true;
     }
 
     /**
@@ -258,7 +267,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
 
         return TFAService.generateQRCode(authKey, username);
     }
-
 
     /**
      * Valida un código de autenticación para un usuario.
