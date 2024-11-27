@@ -15,4 +15,6 @@ public interface ClientInterface extends Remote {
     void receiveFriendRequest(String requestSender) throws RemoteException;
     void receiveRequests(List<String> sentRequests, List<String> receivedRequests) throws RemoteException;
     void receiveRequestCancelled(String receiverName) throws RemoteException;
+    void receiveKeys(HashMap<String, String> keys) throws RemoteException;
+    void receiveNewKey(String username, String key) throws RemoteException;
 }

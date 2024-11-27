@@ -6,9 +6,11 @@ import whisp.interfaces.ClientInterface;
 import whisp.interfaces.ServerInterface;
 import whisp.utils.Encrypter;
 import whisp.utils.TFAService;
+import whisp.utils.P2Pencryption;
 
 import java.io.Serializable;
 import java.lang.invoke.MethodHandles;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -34,7 +36,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     protected Server() throws RemoteException {
         super();
         dbManager = new DBManager();
-        checkIfAlive();
     }
 
 
@@ -63,22 +64,49 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     public void registerClient(ClientInterface client) throws RemoteException {
         Logger.info("Trying to register user...");
 
+        String clientName = "";
+        try{
+            clientName = client.getUsername();
+        }catch (RemoteException e){
+            Logger.info("Client could not be reached");
+        }
+
         Logger.info("Fetching friends...");
-        List<String> clientFriendsList = dbManager.getFriends(client.getUsername());
+        List<String> clientFriendsList = dbManager.getFriends(clientName);
         HashMap<String, ClientInterface> clientFriendHashMap = new HashMap<>();
+        HashMap<String, String> clientsKeysHashMap = new HashMap<>();
 
         for (String friend : clientFriendsList) {
             if(clients.containsKey(friend)) {
                 clientFriendHashMap.put(friend, clients.get(friend));
+                //generar la clave para ese par de clientes
+                clientsKeysHashMap.put(friend, P2Pencryption.generateKey());
             }
         }
 
         Logger.info("Sending back friends connected...");
+
         try{
             client.receiveActiveClients(clientFriendHashMap);
 
         } catch (RemoteException e) {
             System.err.println("Error sending active clients");
+        }
+
+        Logger.info("Sending back keys...");
+        try {
+            client.receiveKeys(clientsKeysHashMap);
+        } catch (RemoteException e) {
+            System.err.println("Error sending keys");
+        }
+
+        //send the key to the friend
+        for (Map.Entry<String, String> entry : clientsKeysHashMap.entrySet()) {
+            try {
+                clients.get(entry.getKey()).receiveNewKey(clientName, entry.getValue());
+            } catch (RemoteException e) {
+                System.err.println("Error sending key to " + entry.getKey());
+            }
         }
 
         Logger.info("Fetching requests...");
@@ -92,15 +120,20 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
             System.err.println("Error sending friend requests");
         }
 
-        Logger.info("Sending connected info to other clients...");
-        for (ClientInterface c : clients.values()) {
-            if(dbManager.areFriends(c.getUsername(), client.getUsername())){
-                c.receiveNewClient(client);
-            }
-        }
-
         Logger.info("Saving client reference on server...");
         clients.put(client.getUsername(), client);
+
+        Logger.info("Sending connected info to other clients...");
+        for (Map.Entry<String, ClientInterface> c : clients.entrySet()) {
+            if(dbManager.areFriends(c.getKey(), clientName)){
+                try {
+                    c.getValue().receiveNewClient(client);
+                }catch (RemoteException e){
+                    Logger.info("User " + c.getValue() + " could not be reached, disconecting him...");
+                    disconnectClient(c.getKey());
+                }
+            }
+        }
 
         Logger.info(client.getUsername() + " connected successfully");
     }
@@ -130,7 +163,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
 
         if(clients.containsKey(requestReceiver)) {
             Logger.info("Sending request to user...");
-            clients.get(requestReceiver).receiveFriendRequest(requestSender);
+            try {
+                clients.get(requestReceiver).receiveFriendRequest(requestSender);
+            }catch (RemoteException e){
+                Logger.info("User " + requestReceiver + " could not be reached, disconecting him...");
+                disconnectClient(requestReceiver);
+            }
         }
 
         return true;
@@ -170,14 +208,22 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         dbManager.addFriend(requestSender, requestReceiver);
         Logger.info(requestReceiver + requestReceiver + " are now friends");
 
-        if(clients.containsKey(requestSender)) {
+        if(clients.containsKey(requestSender) && clients.containsKey(requestReceiver)) {
             Logger.info("Notifying sender...");
-            clients.get(requestSender).receiveNewClient(clients.get(requestReceiver));
-        }
+            try {
+                clients.get(requestSender).receiveNewClient(clients.get(requestReceiver));
+            }catch (RemoteException e) {
+                Logger.info("User " + requestSender + " could not be reached, disconecting him...");
+                disconnectClient(requestSender);
+            }
 
-        if(clients.containsKey(requestReceiver)) {
             Logger.info("Notifying receiver...");
-            clients.get(requestReceiver).receiveNewClient(clients.get(requestSender));
+            try{
+                clients.get(requestReceiver).receiveNewClient(clients.get(requestSender));
+            }catch (RemoteException e) {
+                Logger.info("User " + requestReceiver + " could not be reached, disconecting him...");
+                disconnectClient(requestReceiver);
+            }
         }
 
 
@@ -198,7 +244,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
 
         dbManager.deleteFriendRequest(senderName, username);
         if(clients.containsKey(senderName)) {
-            clients.get(senderName).receiveRequestCancelled(username);
+            try {
+                clients.get(senderName).receiveRequestCancelled(username);
+            }catch (RemoteException e) {
+            Logger.info("User " + senderName + " could not be reached, disconecting him...");
+            disconnectClient(senderName);
+        }
         }
     }
 
@@ -303,28 +354,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         dbManager.changePassword(username, password, salt);
     }
 
-    // CARGARME ESTA MIERDA
-    public void checkIfAlive() {
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-
-        executor.scheduleAtFixedRate(() -> {
-            try {
-                Logger.info("Number of clients connected: " + clients.values().size());
-                for (Map.Entry<String, ClientInterface> clientEntry : clients.entrySet()) {
-                    try {
-                        clientEntry.getValue().ping();
-                    } catch (RemoteException e) {
-                        disconnectClient(clientEntry.getKey());
-                        break;
-                    }
-                }
-            }catch (Exception e){
-                Logger.error("Error en checkIfAlive");
-                e.printStackTrace();
-            }
-        }, 0, 5, TimeUnit.SECONDS);
-    }
-
     /**
      * Desconecta un cliente del sistema.
      *
@@ -343,6 +372,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
      *
      * @param clientUsername el nombre del usuario del cliente a desconectar.
      */
+    @Override
     public synchronized void disconnectClient(String clientUsername) {
         System.out.println(clientUsername + " disconnected");
         ClientInterface deadClient = clients.get(clientUsername);
