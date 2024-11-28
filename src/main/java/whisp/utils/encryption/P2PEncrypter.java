@@ -1,10 +1,23 @@
-package whisp.utils;
+package whisp.utils.encryption;
+
+import whisp.utils.Logger;
 
 import javax.crypto.*;
 import java.security.NoSuchAlgorithmException;
 
-public class P2Pencryption {
+public class P2PEncrypter {
 
+    //*******************************************************************************************
+    //* STATIC METHODS
+    //*******************************************************************************************
+
+    /**
+     * Genera una clave secreta AES de 256 bits y la devuelve en formato Base64.
+     * <p>
+     *
+     * @return una cadena que representa la clave secreta codificada en Base64.
+     * @throws IllegalStateException si ocurre un error crítico al generar la clave.
+     */
     public static String generateKey() {
         //generar una clave secreta
         KeyGenerator keyGen = null;

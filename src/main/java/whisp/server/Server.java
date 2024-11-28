@@ -4,19 +4,14 @@ import com.warrenstrange.googleauth.GoogleAuthenticator;
 import whisp.utils.Logger;
 import whisp.interfaces.ClientInterface;
 import whisp.interfaces.ServerInterface;
-import whisp.utils.Encrypter;
+import whisp.utils.encryption.PasswordEncrypter;
 import whisp.utils.TFAService;
-import whisp.utils.P2Pencryption;
+import whisp.utils.encryption.P2PEncrypter;
 
 import java.io.Serializable;
-import java.lang.invoke.MethodHandles;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class Server extends UnicastRemoteObject implements ServerInterface, Serializable {
 
@@ -80,7 +75,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
             if(clients.containsKey(friend)) {
                 clientFriendHashMap.put(friend, clients.get(friend));
                 //generar la clave para ese par de clientes
-                clientsKeysHashMap.put(friend, P2Pencryption.generateKey());
+                clientsKeysHashMap.put(friend, P2PEncrypter.generateKey());
             }
         }
 
@@ -311,7 +306,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         Logger.info("Registration credentials received, registering...");
 
         Logger.info("Creating auth key...");
-        String authKey = Encrypter.genAuthKey(username, salt);
+        String authKey = PasswordEncrypter.genAuthKey(username, salt);
 
         Logger.info("Saving credentials on database...");
         dbManager.register(username, password, authKey, salt);
@@ -336,7 +331,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
 
         Logger.info("Decrypting authKey and checking validation...");
         GoogleAuthenticator gAuth = new GoogleAuthenticator();
-        String authKey = Encrypter.decrypt(encryptedAuthKey, Encrypter.getKey(username, salt));
+        String authKey = PasswordEncrypter.decrypt(encryptedAuthKey, PasswordEncrypter.getKey(username, salt));
         return gAuth.authorize(authKey, code);
     }
 
@@ -369,6 +364,19 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
             Logger.info( clientUsername + " is dead, disconnecting...");
             disconnectClient(clientUsername);
         }
+    }
+
+    /**
+     * Checkea en la Base de Datos si dos usuarios son amigos
+     *
+     * @param friend1 nombre del usuario 1.
+     * @param friend2 nombre del usuario 2.
+     * @return {@code true} si son amigos, {@code false} en cualquier otro caso
+     * @throws RemoteException si ocurre un error remoto.
+     */
+    @Override
+    public boolean areFriends(String friend1, String friend2) throws RemoteException {
+        return dbManager.areFriends(friend1, friend2);
     }
 
     /**

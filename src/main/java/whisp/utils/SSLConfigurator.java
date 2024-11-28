@@ -35,7 +35,7 @@ public class SSLConfigurator {
 
 
     //*******************************************************************************************
-    //* METHODS
+    //* STATIC METHODS
     //*******************************************************************************************
 
     /**
@@ -99,7 +99,6 @@ public class SSLConfigurator {
             throw new IllegalStateException("This should never happen, something went horribly wrong", e);
         }
     }
-
 
     /**
      * Genera un certificado X.509 firmado utilizando las claves proporcionadas.

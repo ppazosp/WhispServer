@@ -1,18 +1,20 @@
-package whisp.utils;
+package whisp.utils.encryption;
+
+import whisp.utils.Logger;
+import whisp.utils.TFAService;
 
 import javax.crypto.*;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
-public class Encrypter {
+public class PasswordEncrypter {
 
     //*******************************************************************************************
-    //* CONSTANTS
+    //* STATIC CONSTANTS
     //*******************************************************************************************
 
     private static final int ITERATIONS = 65536;
@@ -27,7 +29,7 @@ public class Encrypter {
     //*******************************************************************************************
 
     /**
-     * Genera una clave derivada utilizando {@link Encrypter#ALGORITHM_HASHING} como algoritmo.
+     * Genera una clave derivada utilizando {@link PasswordEncrypter#ALGORITHM_HASHING} como algoritmo.
      *
      * @param key la clave base (normalmente un nombre de usuario).
      * @param salt el salt codificado en Base64.
@@ -51,7 +53,7 @@ public class Encrypter {
     }
 
     /**
-     * Cifra datos utilizando el algoritmo {@link Encrypter#ALGORITHM_ENCRYPT} y una clave codificada en Base64.
+     * Cifra datos utilizando el algoritmo {@link PasswordEncrypter#ALGORITHM_ENCRYPT} y una clave codificada en Base64.
      *
      * @param data los datos que se desean cifrar.
      * @param base64Key la clave AES codificada en Base64.
@@ -72,7 +74,7 @@ public class Encrypter {
     }
 
     /**
-     * Descifra datos previamente cifrados utilizando el algoritmo {@link Encrypter#ALGORITHM_ENCRYPT} y una clave codificada en Base64.
+     * Descifra datos previamente cifrados utilizando el algoritmo {@link PasswordEncrypter#ALGORITHM_ENCRYPT} y una clave codificada en Base64.
      *
      * @param encryptedData los datos cifrados codificados en Base64.
      * @param base64Key la clave AES codificada en Base64.
@@ -117,7 +119,7 @@ public class Encrypter {
      */
     public static String genAuthKey(String key, String salt) {
         String authKey = TFAService.generateSecretKey();
-        String aesKey = Encrypter.getKey(new StringBuilder(key).reverse().toString(), salt);
-        return  Encrypter.encrypt(authKey, aesKey);
+        String aesKey = PasswordEncrypter.getKey(new StringBuilder(key).reverse().toString(), salt);
+        return  PasswordEncrypter.encrypt(authKey, aesKey);
     }
 }

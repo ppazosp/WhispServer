@@ -16,4 +16,5 @@ public interface ServerInterface extends Remote {
     void changePassword(String username, String password, String salt) throws RemoteException;
     void requestCancelled(String username, String senderName) throws RemoteException;
     void checkClientStatus(String clientUsername) throws RemoteException;
+    boolean areFriends (String friend1, String friend2) throws RemoteException;
 }

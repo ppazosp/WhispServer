@@ -10,8 +10,24 @@ import java.rmi.registry.Registry;
 
 public class ServerApplication {
 
+    //*******************************************************************************************
+    //* CONSTANTS
+    //*******************************************************************************************
+
     private final static int SERVER_PORT = 1099;
 
+
+
+    //*******************************************************************************************
+    //* MAIN METHODS
+    //*******************************************************************************************
+
+    /**
+     * Main del programa, define las propiedas a usar en JavaRMI, crea el Registry del servidor
+     * y configura el contexto SSL.
+     *
+     * @param args argumentos por línea de comandos
+     *  */
     public static void main(String[] args) {
         try {
             System.setProperty("java.rmi.server.hostname", "localhost");
