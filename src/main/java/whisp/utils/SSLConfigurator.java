@@ -46,41 +46,35 @@ public class SSLConfigurator {
      * </p>
      */
     public void genKeyCertificateServer() {
-        // Generar clave y certificado del servidor
-        KeyPair serverKeyPair = generateKeyPair();
-        X509Certificate serverCert = generateCertificate(serverKeyPair, "CN=rmiserver, OU=Development, L=Santiago, C=ES");
 
-        // Guardar el certificado y clave del servidor en su KeyStore
-        saveKeyStore(SERVER_KEYSTORE, "rmiserver", serverKeyPair.getPrivate(), serverCert, PASSWORD);
+        try {
+            KeyStore trustStore = KeyStore.getInstance("JKS");
+            try (FileInputStream trustStoreInput = new FileInputStream(SERVER_TRUSTSTORE)) {
+                trustStore.load(trustStoreInput, PASSWORD.toCharArray());
+            } catch (FileNotFoundException e) {
+                // Si el TrustStore no existe, lo creamos vacío
+                trustStore.load(null, PASSWORD.toCharArray());
+            }
 
-        // Exportar el certificado del servidor al TrustStore del cliente
-        saveTrustStore(SERVER_TRUSTSTORE, "rmiserver", serverCert, PASSWORD);
+            // Verificar si ya existe el certificado en el TrustStore
+            if (trustStore.containsAlias("rmiserver")) {
+                System.out.println("El certificado ya existe en el TrustStore. Reutilizándolo.");
+                return;
+            }
 
-        System.out.println("Servidor KeyStore y TrustStore generados.");
-    }
+            // Si no existe, generar clave y certificado del servidor
+            KeyPair serverKeyPair = generateKeyPair();
+            X509Certificate serverCert = generateCertificate(serverKeyPair, "CN=rmiserver, OU=Development, L=Santiago, C=ES");
 
-    /**
-     * Genera una clave y un certificado X.509 para un cliente.
-     *
-     * <p>
-     *     Guarda el certificado y la clave en un KeyStore y exporta el certificado al TrustStore del servidor.
-     * </p>
-     *
-     * @param clientName el nombre del cliente para el que se generará la clave y el certificado.
-     */
-    public void genKeyCertificateClient(String clientName) {
-        // Generar clave y certificado para el cliente
-        KeyPair clientKeyPair = generateKeyPair();
-        String clientSubject = "CN=" + clientName + ", OU=Clients, L=Santiago, C=ES";
-        X509Certificate clientCert = generateCertificate(clientKeyPair, clientSubject);
+            saveKeyStore(SERVER_KEYSTORE, "rmiserver", serverKeyPair.getPrivate(), serverCert, PASSWORD);
 
-        // Guardar el certificado y clave del cliente en su propio KeyStore
-        saveKeyStore(CLIENT_KEYSTORE_PREFIX + "_" + clientName + ".keystore", clientName, clientKeyPair.getPrivate(), clientCert, PASSWORD);
+            saveTrustStore(SERVER_TRUSTSTORE, "rmiserver", serverCert, PASSWORD);
 
-        // Exportar el certificado del cliente al TrustStore del servidor
-        saveTrustStore(CLIENT_TRUSTSTORE, clientName, clientCert, PASSWORD);
-
-        System.out.println("Cliente KeyStore y TrustStore generados para: " + clientName);
+            System.out.println("Servidor KeyStore y TrustStore generados.");
+        } catch (Exception e) {
+            Logger.error("Error loading truststore from KeyStore");
+            throw new IllegalStateException("This should never happen, something went horribly wrong", e);
+        }
     }
 
     /**
@@ -145,7 +139,7 @@ public class SSLConfigurator {
     public static void saveKeyStore(String keyStorePath, String alias, PrivateKey privateKey, X509Certificate certificate, String password) {
         try {
             KeyStore keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(null, null);
+            keyStore.load(null, PASSWORD.toCharArray());
             keyStore.setKeyEntry(alias, privateKey, password.toCharArray(), new Certificate[]{certificate});
             keyStore.store(new FileOutputStream(keyStorePath), password.toCharArray());
         } catch (Exception e) {
@@ -170,8 +164,7 @@ public class SSLConfigurator {
             try (FileInputStream fis = new FileInputStream(trustStorePath)) {
                 trustStore.load(fis, password.toCharArray());
             } catch (FileNotFoundException e) {
-                // Si el archivo no existe, inicializar uno nuevo
-                trustStore.load(null, null);
+                trustStore.load(null, PASSWORD.toCharArray());
             }
             trustStore.setCertificateEntry(alias, certificate);
             trustStore.store(new FileOutputStream(trustStorePath), password.toCharArray());

@@ -95,15 +95,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
             System.err.println("Error sending keys");
         }
 
-        //send the key to the friend
-        for (Map.Entry<String, String> entry : clientsKeysHashMap.entrySet()) {
-            try {
-                clients.get(entry.getKey()).receiveNewKey(clientName, entry.getValue());
-            } catch (RemoteException e) {
-                System.err.println("Error sending key to " + entry.getKey());
-            }
-        }
-
         Logger.info("Fetching requests...");
         List<String> clientReceivedRequestsList = dbManager.getReceivedFriendRequests(client.getUsername());
         List<String> clientSentRequestsList = dbManager.getSentFriendRequests(client.getUsername());
@@ -123,6 +114,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
             if(dbManager.areFriends(c.getKey(), clientName)){
                 try {
                     c.getValue().receiveNewClient(client);
+                    c.getValue().receiveNewKey(clientName, clientsKeysHashMap.get(c.getKey()));
                 }catch (RemoteException e){
                     Logger.info("User " + c.getValue() + " could not be reached, disconecting him...");
                     disconnectClient(c.getKey());
@@ -204,9 +196,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         Logger.info(requestReceiver + requestReceiver + " are now friends");
 
         if(clients.containsKey(requestSender) && clients.containsKey(requestReceiver)) {
+            Logger.info("Creatin key for users...");
+            String key = P2PEncrypter.generateKey();
             Logger.info("Notifying sender...");
             try {
                 clients.get(requestSender).receiveNewClient(clients.get(requestReceiver));
+                clients.get(requestSender).receiveNewKey(requestReceiver, key);
             }catch (RemoteException e) {
                 Logger.info("User " + requestSender + " could not be reached, disconecting him...");
                 disconnectClient(requestSender);
@@ -215,6 +210,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
             Logger.info("Notifying receiver...");
             try{
                 clients.get(requestReceiver).receiveNewClient(clients.get(requestSender));
+                clients.get(requestReceiver).receiveNewKey(requestSender, key);
             }catch (RemoteException e) {
                 Logger.info("User " + requestReceiver + " could not be reached, disconecting him...");
                 disconnectClient(requestReceiver);
@@ -284,7 +280,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
     @Override
     public boolean checkUsernameAvailability(String username) throws RemoteException {
         Logger.info("Username received, checking availability...");
-        return dbManager.isUsernameTaken(username);
+        return !dbManager.isUsernameTaken(username);
     }
 
     /**
