@@ -302,10 +302,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         Logger.info("Registration credentials received, registering...");
 
         Logger.info("Creating auth key...");
-        String authKey = PasswordEncrypter.genAuthKey(username, salt);
+        String authKey = TFAService.generateSecretKey();
+        String encryptedAuthKey = PasswordEncrypter.encrypt(authKey, PasswordEncrypter.getKey(username, salt));
 
         Logger.info("Saving credentials on database...");
-        dbManager.register(username, password, authKey, salt);
+        dbManager.register(username, password, encryptedAuthKey, salt);
 
         return TFAService.generateQRCode(authKey, username);
     }
@@ -326,23 +327,24 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Seri
         String encryptedAuthKey = dbManager.getAuthKey(username);
 
         Logger.info("Decrypting authKey and checking validation...");
-        GoogleAuthenticator gAuth = new GoogleAuthenticator();
         String authKey = PasswordEncrypter.decrypt(encryptedAuthKey, PasswordEncrypter.getKey(username, salt));
-        return gAuth.authorize(authKey, code);
+
+        return TFAService.gAuth.authorize(authKey, code);
     }
 
     /**
      * Cambia la contraseña de un usuario.
      *
      * @param username el nombre del usuario.
-     * @param password la nueva contraseña del usuario.
+     * @param oldPassword la vieja contraseña del usuario.
+     * @param newPassword la nueva contraseña del usuario.
      * @param salt el nuevo salt del usuario
      * @throws RemoteException si ocurre un error remoto.
      */
     @Override
-    public void changePassword(String username, String password, String salt) throws RemoteException {
+    public void changePassword(String username, String oldPassword, String newPassword, String salt) throws RemoteException {
         Logger.info("New password change petition received, proceeding to complete it...");
-        dbManager.changePassword(username, password, salt);
+        dbManager.changePassword(username, oldPassword, newPassword, salt);
     }
 
     /**

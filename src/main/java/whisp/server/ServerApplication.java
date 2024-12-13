@@ -5,6 +5,8 @@ import whisp.utils.SSLConfigurator;
 
 import javax.net.ssl.SSLContext;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
+import java.io.*;
+import java.nio.file.Paths;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
@@ -30,16 +32,26 @@ public class ServerApplication {
      *  */
     public static void main(String[] args) {
         try {
-            System.setProperty("java.rmi.server.hostname", "100.79.5.93");
+            String basePath = "/Applications/WhispServer.app/Contents/app/conf";
+
+            String filePath = Paths.get(basePath, "ips.conf").toString();
+            String serverIp = readIpFromFile(filePath);
+            System.out.println("Server IP: " + serverIp);
+
+            String trustStorePath = Paths.get(basePath, "server.truststore").toString();
+
+            String keyStorePath = Paths.get(basePath, "server.keystore").toString();
+
+            System.setProperty("java.rmi.server.hostname", serverIp);
             System.setProperty("https.protocols", "TLSv1.2,TLSv1.3");
             System.setProperty("javax.rmi.ssl.server.enabledProtocols", "TLSv1.2,TLSv1.3");
-            System.setProperty("javax.net.ssl.keyStore", "server.keystore");
+            System.setProperty("javax.net.ssl.keyStore", keyStorePath);
             System.setProperty("javax.net.ssl.keyStorePassword", "password");
-            System.setProperty("javax.net.ssl.trustStore", "server.truststore");
+            System.setProperty("javax.net.ssl.trustStore", trustStorePath);
             System.setProperty("javax.net.ssl.trustStorePassword", "password");
             SSLConfigurator sslConfigurator = new SSLConfigurator();
             sslConfigurator.genKeyCertificateServer();
-            SSLContext sslContext = sslConfigurator.loadSSLContext("server.keystore", "password");
+            SSLContext sslContext = sslConfigurator.loadSSLContext(keyStorePath, "password");
 
             SslRMIServerSocketFactory sslServerSocketFactory = new SslRMIServerSocketFactory(
                     sslContext, null, null, false);
@@ -52,6 +64,34 @@ public class ServerApplication {
 
         } catch (Exception e) {
             System.err.println("Error starting server");
+            System.exit(1);
         }
+    }
+
+    /**
+     * Lee el archivo ips.conf y extrae las direcciones IP.
+     *
+     * @param filePath Ruta al archivo ips.conf.
+     * @return Un array de cadenas con las IPs del servidor y del cliente.
+     * @throws IOException Si ocurre un error al leer el archivo.
+     */
+    public static String readIpFromFile(String filePath) throws IOException {
+        String serverIp = null;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.startsWith("SERVER_IP")) {
+                    serverIp = line.split("=")[1].trim();
+                }
+            }
+        }
+
+        if (serverIp == null) {
+            throw new IOException("Missing SERVER_IP or CLIENT_IP in the file.");
+        }
+
+        return serverIp;
     }
 }

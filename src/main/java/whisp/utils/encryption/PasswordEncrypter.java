@@ -90,6 +90,7 @@ public class PasswordEncrypter {
             return new String(decryptedBytes);
         }catch (NoSuchPaddingException | NoSuchAlgorithmException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
             Logger.error("Critical error in hashing function");
+            e.printStackTrace();
             throw new IllegalStateException("This should never happen, something went horribly wrong", e);
         }
     }
@@ -119,7 +120,9 @@ public class PasswordEncrypter {
      */
     public static String genAuthKey(String key, String salt) {
         String authKey = TFAService.generateSecretKey();
-        String aesKey = PasswordEncrypter.getKey(new StringBuilder(key).reverse().toString(), salt);
+        String aesKey = PasswordEncrypter.getKey(key, salt);
+        System.out.println("auth key: " + authKey);
+        System.out.println("aes key: " + aesKey);
         return  PasswordEncrypter.encrypt(authKey, aesKey);
     }
 }

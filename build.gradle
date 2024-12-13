@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'whisp'
-version '1.0-SNAPSHOT'
+version '2.0'
 
 repositories {
     mavenCentral()
@@ -17,8 +17,8 @@ ext {
     junitVersion = '5.10.2'
 }
 
-sourceCompatibility = '22'
-targetCompatibility = '22'
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -30,7 +30,7 @@ application {
 }
 
 javafx {
-    version = '22.0.1'
+    version = '17.0.1'
     modules = ['javafx.controls', 'javafx.fxml']
 }
 
@@ -50,14 +50,37 @@ test {
     useJUnitPlatform()
 }
 
-jlink {
-    imageZip = project.file("${buildDir}/distributions/app-${javafx.platform.classifier}.zip")
-    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
-    launcher {
-        name = 'app'
+tasks.register("prepareResources", Copy) {
+    from(".") {
+        include("server.truststore", "server.keystore", "ips.conf")
     }
+    into("$buildDir/jpackage/WhispServer.app/Contents/app/conf")
 }
 
-jlinkZip {
-    group = 'distribution'
+tasks.named("jpackage").configure {
+    dependsOn("prepareResources")
+}
+
+jlink {
+    launcher {
+        name = 'WhispServer'
+    }
+
+    jpackage {
+        imageOptions = [
+                '--icon', 'src/main/resources/whisp_logo.icns'
+        ]
+        options = ['--ignore-signing-information']
+        installerOutputDir = file("$buildDir/installers")
+        installerOptions = [
+                '--name', 'WhispServer',
+                '--app-version', '2.0',
+                '--vendor', 'NelyPazos',
+                '--dest', "$buildDir/installers",
+                '--resource-dir', "$buildDir/jpackage/WhispServer.app/Contents/app/",
+                '--type', 'dmg',
+                '--mac-package-identifier', 'nelypazos.whispserver',
+                '--mac-package-name', 'WhispServer',
+        ]
+    }
 }

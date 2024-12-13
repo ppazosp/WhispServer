@@ -1,6 +1,7 @@
 package whisp.utils;
 
 import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -11,8 +12,12 @@ import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TFAService {
+
+    public static GoogleAuthenticator gAuth = new GoogleAuthenticator();
 
     //*******************************************************************************************
     //* STATIC METHODS
@@ -24,7 +29,6 @@ public class TFAService {
      * @return la clave secreta generada como un {@link String}.
      */
     public static String generateSecretKey() {
-        GoogleAuthenticator gAuth = new GoogleAuthenticator();
         GoogleAuthenticatorKey key = gAuth.createCredentials();
         return key.getKey();
     }
@@ -48,7 +52,11 @@ public class TFAService {
             String otpAuthURL = String.format("otpauth://totp/%s:%s?secret=%s&issuer=%s",
                     issuer, username, secretKey, issuer);
 
-            BitMatrix bitMatrix = new MultiFormatWriter().encode(otpAuthURL, BarcodeFormat.QR_CODE, 300, 300);
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            hints.put(EncodeHintType.MARGIN, 1);
+
+            BitMatrix bitMatrix = new MultiFormatWriter().encode(otpAuthURL, BarcodeFormat.QR_CODE, 300, 300, hints);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
 

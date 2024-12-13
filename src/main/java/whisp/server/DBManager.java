@@ -253,19 +253,21 @@ public class DBManager {
      * Cambia la contraseña de un usuario y actualiza su salt asociado en la base de datos.
      *
      * @param username el nombre del usuario.
-     * @param password la nueva contraseña.
+     * @param oldPassword la vieja contraseña
+     * @param newPassword la nueva contraseña.
      * @param salt la nueva sal asociada.
      */
-    public void changePassword(String username, String password, String salt){
+    public void changePassword(String username, String oldPassword, String newPassword, String salt){
 
-        String query = "UPDATE \"user\" SET password = ?, salt = ? WHERE username = ?";
+        String query = "UPDATE \"user\" SET password = ?, salt = ? WHERE username = ? and password = ?";
 
         try (Connection conn = connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
-            stmt.setString(1, password);
+            stmt.setString(1, oldPassword);
             stmt.setString(2, salt);
             stmt.setString(3, username);
+            stmt.setString(4, newPassword);
 
             stmt.executeUpdate();
 
