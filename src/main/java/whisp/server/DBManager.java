@@ -13,9 +13,9 @@ public class DBManager {
     //* ATTRIBUTES
     //*******************************************************************************************
 
-    private static final String DB_URL = "jdbc:postgresql://aws-0-eu-west-3.pooler.supabase.com:6543/postgres";
-    private static final String DB_USER = "postgres.cdsycjhyadjvjrhdwtut";
-    private static final String DB_PASSWORD = "UT3y6PVcnCx2TxgT";
+    private static final String DB_URL = "x";
+    private static final String DB_USER = "x";
+    private static final String DB_PASSWORD = "x";
 
     private Connection connect() throws SQLException {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
