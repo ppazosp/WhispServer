@@ -32,26 +32,20 @@ public class ServerApplication {
      *  */
     public static void main(String[] args) {
         try {
-            String basePath = "/Applications/WhispServer.app/Contents/app/conf";
-
-            String filePath = Paths.get(basePath, "ips.conf").toString();
+            String filePath = Paths.get( "ips.conf").toString();
             String serverIp = readIpFromFile(filePath);
             System.out.println("Server IP: " + serverIp);
-
-            String trustStorePath = Paths.get(basePath, "server.truststore").toString();
-
-            String keyStorePath = Paths.get(basePath, "server.keystore").toString();
 
             System.setProperty("java.rmi.server.hostname", serverIp);
             System.setProperty("https.protocols", "TLSv1.2,TLSv1.3");
             System.setProperty("javax.rmi.ssl.server.enabledProtocols", "TLSv1.2,TLSv1.3");
-            System.setProperty("javax.net.ssl.keyStore", keyStorePath);
+            System.setProperty("javax.net.ssl.keyStore", "server.keystore");
             System.setProperty("javax.net.ssl.keyStorePassword", "password");
-            System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+            System.setProperty("javax.net.ssl.trustStore", "server.truststore");
             System.setProperty("javax.net.ssl.trustStorePassword", "password");
             SSLConfigurator sslConfigurator = new SSLConfigurator();
             sslConfigurator.genKeyCertificateServer();
-            SSLContext sslContext = sslConfigurator.loadSSLContext(keyStorePath, "password");
+            SSLContext sslContext = sslConfigurator.loadSSLContext("server.keystore", "password");
 
             SslRMIServerSocketFactory sslServerSocketFactory = new SslRMIServerSocketFactory(
                     sslContext, null, null, false);
@@ -64,6 +58,7 @@ public class ServerApplication {
 
         } catch (Exception e) {
             System.err.println("Error starting server");
+            e.printStackTrace();
             System.exit(1);
         }
     }

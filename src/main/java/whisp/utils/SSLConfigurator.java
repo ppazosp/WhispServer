@@ -26,8 +26,8 @@ public class SSLConfigurator {
     //* CONSTANTS
     //*******************************************************************************************
 
-    private static final String SERVER_KEYSTORE = "/Applications/WhispServer.app/Contents/app/conf/server.keystore";
-    private static final String SERVER_TRUSTSTORE = "/Applications/WhispServer.app/Contents/app/conf/server.truststore";
+    private static final String SERVER_KEYSTORE = "server.keystore";
+    private static final String SERVER_TRUSTSTORE = "server.truststore";
     private static final String PASSWORD = "password";
 
 
