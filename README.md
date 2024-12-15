@@ -27,4 +27,3 @@ Communication is powered by **Java RMI**, with security as a key feature.
 ## Related repositories
 
 - [Client](https://github.com/ppazosp/WhispClient)
-- [Server](https://github.com/ppazosp/WhispServer)
